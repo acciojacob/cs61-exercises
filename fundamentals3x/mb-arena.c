@@ -37,7 +37,7 @@ See "membench.h" for function semantics.
 // A `free_chunk` was allocated by the arena, but isn't currently in
 // use. You'll likely put some bookkeeping information into such chunks.
 typedef struct free_chunk {
-    // YOUR CODE HERE
+    struct free_chunk* next;
 } free_chunk;
 
 // A `chunk_or_free` object is *either* an allocated chunk, *or* a
@@ -60,20 +60,21 @@ struct membench_arena {
 
 membench_arena* membench_arena_new(void) {
     // An arena initially contains a single chunk, which is free.
-    // TODO: Change this!
-    membench_arena* arena = (membench_arena*) malloc(sizeof(membench_arena));
+    membench_arena* arena = (membench_arena*) malloc(1024);
     arena->free = &arena->first_group.chunks[0].f;
+    arena->free->next = &arena->first_group.chunks[1].f;
     return arena;
 }
 
 chunk* membench_alloc(membench_arena* arena) {
     assert(arena->free != NULL);
     chunk* result = (chunk*) arena->free; // OK because of the union
-    arena->free = NULL;
+    arena->free = arena->free->next;
     return result;
 }
 
 void membench_free(membench_arena* arena, chunk* x) {
+    arena->free->next = arena->free;
     arena->free = (free_chunk*) x; // OK because of the union
 }
 
